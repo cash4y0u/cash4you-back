@@ -3,3 +3,4 @@ uvicorn[standard]
 pymysql
 python-jose
 email-validator
+pytz

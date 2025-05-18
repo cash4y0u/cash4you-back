@@ -2,16 +2,11 @@ from fastapi import APIRouter, Form, HTTPException
 from pydantic import BaseModel
 from jose import jwt
 from auth import SECRET_KEY, ALGORITHM
+from database import get_db_connection
+import bcrypt
+import pymysql
 
 router = APIRouter(tags=["Autenticação"])
-
-# Banco fake (ou substitua por seu repositório real)
-fake_user_db = {
-    "usuario@email.com": {
-        "username": "usuario@email.com",
-        "password": "123456"
-    }
-}
 
 class Token(BaseModel):
     access_token: str
@@ -25,13 +20,26 @@ async def login(
     username: str = Form(...),
     password: str = Form(...)
 ):
-    user = fake_user_db.get(username)
-    if not user or user["password"] != password:
-        raise HTTPException(status_code=401, detail="Credenciais inválidas")
+    conn = get_db_connection()
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
 
-    access_token = create_access_token({"sub": user["username"]})
-    return {
-        "access_token": access_token,
-        "token_type": "Bearer"
-    }
+    try:
+        cursor.execute("SELECT * FROM cash4you.users WHERE email = %s", (username,))
+        user = cursor.fetchone()
 
+        if not user:
+            raise HTTPException(status_code=401, detail="Usuário não encontrado")
+
+        # Comparar senha com hash
+        if not bcrypt.checkpw(password.encode('utf-8'), user["password"].encode('utf-8')):
+            raise HTTPException(status_code=401, detail="Senha inválida")
+
+        access_token = create_access_token({"sub": user["email"]})
+        return {
+            "access_token": access_token,
+            "token_type": "Bearer"
+        }
+
+    finally:
+        cursor.close()
+        conn.close()
