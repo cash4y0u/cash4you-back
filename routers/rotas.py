@@ -15,8 +15,6 @@ router = APIRouter(
     dependencies=[Depends(verificar_token)]
 )
 
-
-
 # Modelo de entrada
 class RotaCreate(BaseModel):
     provision_id: int
@@ -117,8 +115,6 @@ def listar_rotas():
     finally:
         cursor.close()
         conn.close()
-
-
 
 @router.get("/{id}")
 def obter_rota(id: int):

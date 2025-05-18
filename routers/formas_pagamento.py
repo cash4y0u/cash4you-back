@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import List
 from database import get_db_connection
 from auth import verificar_token
+from fastapi import status
 
 router = APIRouter(
     prefix="/formas-pagamento",
@@ -12,6 +13,15 @@ router = APIRouter(
 
 class FormaPagamento(BaseModel):
     id: int
+    name: str
+    description: str
+
+# Modelo de entrada
+class FormaPagamentoCreate(BaseModel):
+    name: str
+    description: str
+
+class FormaPagamentoUpdate(BaseModel):
     name: str
     description: str
 
@@ -27,12 +37,6 @@ def listar_formas_pagamento():
     finally:
         conn.close()
 
-
-# Modelo de entrada
-class FormaPagamentoCreate(BaseModel):
-    name: str
-    description: str
-
 @router.post("")
 def criar_forma_pagamento(forma: FormaPagamentoCreate):
     conn = get_db_connection()
@@ -47,12 +51,6 @@ def criar_forma_pagamento(forma: FormaPagamentoCreate):
     finally:
         conn.close()
 
-
-class FormaPagamentoUpdate(BaseModel):
-    name: str
-    description: str
-
-# Rota para atualizar forma de pagamento
 @router.put("/{id}")
 def atualizar_forma_pagamento(id: int, dados: FormaPagamentoUpdate):
     connection = get_db_connection()
@@ -82,7 +80,6 @@ def atualizar_forma_pagamento(id: int, dados: FormaPagamentoUpdate):
     finally:
         connection.close()
 
-from fastapi import status
 
 @router.delete("/{id}", status_code=status.HTTP_200_OK)
 def deletar_forma_pagamento(id: int = Path(..., description="ID da forma de pagamento a ser removida")):

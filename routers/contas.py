@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from database import get_db_connection
 from auth import verificar_token
 import json
-
+from fastapi import HTTPException
 from utils import agora_sp
 
 router = APIRouter(
@@ -11,7 +11,6 @@ router = APIRouter(
     tags=["Contas Bancárias"],
     dependencies=[Depends(verificar_token)]
 )
-
 class BankUpdate(BaseModel):
     banco: str
     agencia: str
@@ -85,7 +84,6 @@ def buscar_contas_bancarias():
     finally:
         conn.close()
 
-
 @router.post("", include_in_schema=True)
 async def create_account_bank(request: Request):
     import json
@@ -151,13 +149,8 @@ def buscar_contas_bancarias():
     finally:
         conn.close()
 
-
 @router.post("", include_in_schema=True)
 async def create_account_bank(request: Request):
-    import json
-    from fastapi import HTTPException
-    from datetime import datetime
-
     print("\n🏦 Recebida requisição POST /contas-bancarias")
 
     try:

@@ -13,6 +13,9 @@ router = APIRouter(
 )
 
 
+class FechamentoRequest(BaseModel):
+    data: date
+
 @router.get("/fechamento-transacoes")
 def obter_transacoes_do_dia(data: date = Query(..., description="Data do fechamento")):
     conn = get_db_connection()
@@ -44,10 +47,6 @@ def obter_transacoes_do_dia(data: date = Query(..., description="Data do fechame
         raise HTTPException(status_code=500, detail=f"Erro ao buscar transações: {str(e)}")
     finally:
         conn.close()
-
-
-class FechamentoRequest(BaseModel):
-    data: date
 
 @router.post("")
 def realizar_fechamento(payload: FechamentoRequest = Body(...)):

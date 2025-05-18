@@ -13,9 +13,25 @@ router = APIRouter(
     tags=["Clientes"],
     dependencies=[Depends(verificar_token)]
 )
+class Address(BaseModel):
+    city: str
+    type: str
+    state: str
+    number: str
+    street: str
+    zipcode: str
+    district: str
+    favorite: bool
 
 
-# Rota para buscar todos os clientes (apenas ID e nome)
+class ClientUpdate(BaseModel):
+    nome: str
+    birth: str
+    document: str
+    email: EmailStr
+    phone: str
+    addresses: List[Address]
+
 @router.get("")
 def buscar_clientes():
     conn = get_db_connection()
@@ -51,27 +67,6 @@ def buscar_cliente_por_id(id: int = Path(..., description="ID do cliente")):
         return cliente
     finally:
         conn.close()
-
-class Address(BaseModel):
-    city: str
-    type: str
-    state: str
-    number: str
-    street: str
-    zipcode: str
-    district: str
-    favorite: bool
-
-
-class ClientUpdate(BaseModel):
-    nome: str
-    birth: str
-    document: str
-    email: EmailStr
-    phone: str
-    addresses: List[Address]
-
-
 # Rota para atualizar um cliente
 @router.put("/{id}")
 async def update_client(id: int, request: Request):
@@ -126,7 +121,6 @@ async def update_client(id: int, request: Request):
         print(f"\n❌ Erro ao processar requisição: {e}")
         raise HTTPException(status_code=422, detail=f"Erro ao validar JSON: {str(e)}")
 
-
 @router.post("", include_in_schema=False)
 @router.post("", include_in_schema=True)
 async def create_client(request: Request):
@@ -176,8 +170,6 @@ async def create_client(request: Request):
         print(f"\n❌ Erro ao processar requisição: {e}")
         raise HTTPException(status_code=422, detail=f"Erro ao validar JSON: {str(e)}")
 
-
-
 @router.get("/{id}/telefone")
 def buscar_telefone_cliente(id: int = Path(..., description="ID do cliente")):
     conn = get_db_connection()
@@ -222,7 +214,6 @@ def deletar_cliente(id: int = Path(..., description="ID do cliente a ser removid
         raise HTTPException(status_code=500, detail=f"Erro ao deletar cliente: {str(e)}")
     finally:
         conn.close()
-
 
 @router.get("/parcela/{id_parcela}/telefone")
 def buscar_telefone_por_parcela(id_parcela: int = Path(..., description="ID da parcela")):

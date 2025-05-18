@@ -35,7 +35,6 @@ def listar_motoboys():
     finally:
         conn.close()
 
-
 @router.post("")
 def criar_motoboy(motoboy: MotoboyCreate):
     conn = get_db_connection()

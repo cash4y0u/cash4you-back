@@ -12,6 +12,13 @@ router = APIRouter(
     dependencies=[Depends(verificar_token)]
 )
 
+class DespesaCreate(BaseModel):
+    description: str
+    value: float
+    cost_center: str
+    status: str
+    type: str# exemplo: "pending", "paid", etc.
+
 @router.get("")
 def listar_despesas(
     periodo: str = Query("todos", description="Filtrar por hoje, ontem, 7, 15, 30 dias ou todos")
@@ -53,14 +60,6 @@ def listar_despesas(
         return {"despesas": despesas, "total": len(despesas)}
     finally:
         conn.close()
-
-
-class DespesaCreate(BaseModel):
-    description: str
-    value: float
-    cost_center: str
-    status: str
-    type: str# exemplo: "pending", "paid", etc.
 
 @router.post("")
 async def criar_despesa(request: Request):

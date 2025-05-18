@@ -15,6 +15,16 @@ class PagamentoRequest(BaseModel):
     payment_date: date
     payment_method: str
 
+def adicionar_um_mes(data: date) -> date:
+    import calendar
+    ano = data.year
+    mes = data.month + 1
+    if mes > 12:
+        mes = 1
+        ano += 1
+    dia = min(data.day, calendar.monthrange(ano, mes)[1])
+    return date(ano, mes, dia)
+
 
 @router.get("/parcelas-vencer")
 def parcelas_vencer(periodo: str = Query("todos", description="Filtrar por hoje, amanha, 7, 30 ou todos")):
@@ -211,13 +221,3 @@ def finalizar_pagamento(id: int, pagamento: PagamentoRequest):
         raise HTTPException(status_code=500, detail=f"Erro ao processar pagamento: {str(e)}")
     finally:
         conn.close()
-
-def adicionar_um_mes(data: date) -> date:
-    import calendar
-    ano = data.year
-    mes = data.month + 1
-    if mes > 12:
-        mes = 1
-        ano += 1
-    dia = min(data.day, calendar.monthrange(ano, mes)[1])
-    return date(ano, mes, dia)
