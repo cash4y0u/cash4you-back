@@ -4,3 +4,4 @@ pymysql
 python-jose
 email-validator
 pytz
+bcrypt
