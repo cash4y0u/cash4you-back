@@ -1,17 +1,23 @@
 import os
-
 import pymysql
 from dotenv import load_dotenv
 
 load_dotenv()
 
 def get_db_connection():
+    # ✅ Printar variáveis antes de conectar
+    print("🔍 HOST:", os.getenv("HOST"))
+    print("👤 USER:", os.getenv("USER"))
+    print("🔑 SECRET:", os.getenv("SECRET"))
+    print("📂 DATABASE:", os.getenv("DATABASE"))
+    print("📡 PORT:", os.getenv("PORT"))
+
     conn = pymysql.connect(
-        host=os.getenv("HOST"),      # Endereço do servidor MySQL
-        user=os.getenv("USER"),          # Usuário do MySQL
-        password=os.getenv("SECRET"),    # Senha do MySQL
+        host=os.getenv("HOST"),
+        user=os.getenv("USER"),
+        password=os.getenv("SECRET"),
         database=os.getenv("DATABASE"),
-        port=int(os.getenv("PORT", 3306)),# Nome do banco de dados
-        cursorclass=pymysql.cursors.DictCursor  # Retorna resultados como dicionários
+        port=int(os.getenv("PORT", 3306)),
+        cursorclass=pymysql.cursors.DictCursor
     )
     return conn
