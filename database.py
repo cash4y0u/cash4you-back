@@ -10,7 +10,8 @@ def get_db_connection():
         host=os.getenv("HOST"),      # Endereço do servidor MySQL
         user=os.getenv("USER"),          # Usuário do MySQL
         password=os.getenv("SECRET"),    # Senha do MySQL
-        database=os.getenv("DATABASE"),  # Nome do banco de dados
+        database=os.getenv("DATABASE"),
+        port=int(os.getenv("PORT", 3306)),# Nome do banco de dados
         cursorclass=pymysql.cursors.DictCursor  # Retorna resultados como dicionários
     )
     return conn
