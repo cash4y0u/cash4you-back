@@ -21,7 +21,7 @@ app = FastAPI()
 from fastapi.middleware.cors import CORSMiddleware
 
 origins = [
-    "https://cash4you-frontend-qrfuu.ondigitalocean.app",  # ou domínio do seu frontend hospedado
+    "*",  # ou domínio do seu frontend hospedado
 ]
 
 app.add_middleware(
