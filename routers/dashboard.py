@@ -4,7 +4,6 @@ from auth import verificar_token
 from datetime import date, datetime, timedelta
 
 router = APIRouter(
-    prefix="/dashboard",
     tags=["Dashboard"],
     dependencies=[Depends(verificar_token)]
 )
