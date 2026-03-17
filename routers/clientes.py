@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Path, Request
+from fastapi import APIRouter, HTTPException, Depends, Path
 from typing import List
 from pydantic import BaseModel, EmailStr
 from starlette import status
@@ -25,7 +25,7 @@ class Address(BaseModel):
 
 
 class ClientUpdate(BaseModel):
-    nome: str
+    name: str
     birth: str
     document: str
     email: EmailStr
@@ -69,24 +69,9 @@ def buscar_cliente_por_id(id: int = Path(..., description="ID do cliente")):
         conn.close()
 # Rota para atualizar um cliente
 @router.put("/{id}")
-async def update_client(id: int, request: Request):
-    # 1️⃣ FORÇA UM PRINT LOGO NO INÍCIO PARA SABER SE A FUNÇÃO ESTÁ SENDO CHAMADA
+async def update_client(id: int, client: ClientUpdate):
     print(f"\n🚀 Recebida requisição PUT /clientes/{id}")
-
-    # 2️⃣ PEGA O JSON BRUTO E IMPRIME ANTES DE VALIDAR
-    raw_body = await request.body()  # Captura o body bruto
-    body_str = raw_body.decode("utf-8")  # Decodifica para string
-    print(f"\n📌 Body bruto recebido:\n{body_str}")  # Print do JSON recebido como string
-
     try:
-        # 3️⃣ CONVERTE O BODY PARA JSON (DICT) E PRINTA
-        json_body = json.loads(body_str)
-        print(f"\n✅ Body convertido para JSON:\n{json.dumps(json_body, indent=2)}")
-
-        # 4️⃣ VALIDA OS DADOS COM Pydantic
-        client = ClientUpdate(**json_body)
-
-        # 5️⃣ EXECUTA A QUERY PARA ATUALIZAR O CLIENTE
         query = """
             UPDATE customers SET 
             name = %s, 
@@ -98,74 +83,53 @@ async def update_client(id: int, request: Request):
             WHERE id = %s
         """
         values = (
-            client.nome,
+            client.name,
             client.birth,
             client.document,
             client.email,
             client.phone,
-            json.dumps([address.dict() for address in client.addresses]),
+            json.dumps([address.model_dump() for address in client.addresses]),
             id
         )
-
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(query, values)
         conn.commit()
         cursor.close()
         conn.close()
-
         print("\n🎉 Cliente atualizado com sucesso!")
         return {"message": "Cliente atualizado com sucesso!"}
-
     except Exception as e:
         print(f"\n❌ Erro ao processar requisição: {e}")
         raise HTTPException(status_code=422, detail=f"Erro ao validar JSON: {str(e)}")
 
-@router.post("", include_in_schema=False)
-@router.post("", include_in_schema=True)
-async def create_client(request: Request):
+@router.post("")
+async def create_client(client: ClientUpdate):
     print("\n🚀 Recebida requisição POST /clientes")
-
-    raw_body = await request.body()
-    body_str = raw_body.decode("utf-8")
-    print(f"\n📌 Body bruto recebido:\n{body_str}")
-
     try:
-        json_body = json.loads(body_str)
-        print(f"\n✅ Body convertido para JSON:\n{json.dumps(json_body, indent=2)}")
-
-        # 4️⃣ VALIDA OS DADOS COM Pydantic
-        client = ClientUpdate(**json_body)
-
-        # 5️⃣ CONVERTE OS OBJETOS Address PARA DICIONÁRIOS
-        addresses_serialized = json.dumps([address.dict() for address in client.addresses])
-
-        # 6️⃣ EXECUTA A QUERY PARA INSERIR O CLIENTE
+        addresses_serialized = json.dumps([address.model_dump() for address in client.addresses])
         query = """
             INSERT INTO customers (name, birth, document, email, phone, adresses, created_at, updated_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s,%s);
         """
         values = (
-            client.nome,
+            client.name,
             client.birth,
             client.document,
             client.email,
             client.phone,
             addresses_serialized,
             agora_sp(),
-            agora_sp()# ✅ Agora serializável
+            agora_sp()
         )
-
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute(query, values) # Obtém o ID do cliente inserido
+        cursor.execute(query, values)
         conn.commit()
         cursor.close()
         conn.close()
-
         print("\n🎉 Cliente cadastrado com sucesso!")
         return {"message": "Cliente cadastrado com sucesso!"}
-
     except Exception as e:
         print(f"\n❌ Erro ao processar requisição: {e}")
         raise HTTPException(status_code=422, detail=f"Erro ao validar JSON: {str(e)}")
@@ -257,4 +221,3 @@ def buscar_telefone_por_parcela(id_parcela: int = Path(..., description="ID da p
 
     finally:
         conn.close()
-

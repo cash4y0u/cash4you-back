@@ -9,14 +9,6 @@ SECRET_KEY = "super-secret-key"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-# Simulação de "banco de dados"
-fake_user_db = {
-    "usuario@email.com": {
-        "username": "usuario@email.com",
-        "password": "123456",  # senha em texto puro (apenas para exemplo)
-    }
-}
-
 class Token(BaseModel):
     access_token: str
     token_type: str

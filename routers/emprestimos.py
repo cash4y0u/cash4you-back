@@ -24,12 +24,24 @@ class EmprestimoCreate(BaseModel):
     cycle: str
     maturity: date
 
+class EmprestimoUpdate(BaseModel):
+    customer_id: int
+    amount: float
+    split: int
+    amount_provision: float
+    amount_rate: float
+    amount_total: float
+    amount_profit: float
+    rate: float
+    cycle: str
+    maturity: date
+
 def calcular_datas_parcelas(data_inicio: date, quantidade: int, ciclo: str):
     datas = []
     atual = data_inicio
 
     for _ in range(quantidade):
-        datas.routerend(atual)
+        datas.append(atual)
         if ciclo == "daily":
             atual += timedelta(days=1)
         elif ciclo == "weekly":
@@ -178,5 +190,124 @@ def emprestimos(periodo: str = Query("todos", description="Filtrar por hoje, ont
             "contracts": contracts,
             "total": len(contracts)
         }
+    finally:
+        conn.close()
+
+@router.get("/usuario/{customer_id}")
+def emprestimos_usuario(customer_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT c.*, cu.name AS customer_name
+            FROM cash4you.contracts c
+            JOIN cash4you.customers cu ON c.customer_id = cu.id
+            WHERE c.customer_id = %s
+            ORDER BY c.created_at DESC
+            """,
+            (customer_id,)
+        )
+        contracts = cursor.fetchall()
+        if not contracts:
+            raise HTTPException(status_code=404, detail="Nenhum empréstimo encontrado para este usuário.")
+        return {
+            "contracts": contracts,
+            "total": len(contracts)
+        }
+    finally:
+        conn.close()
+
+@router.put("/{contract_id}")
+def editar_emprestimo(contract_id: int, emprestimo: EmprestimoUpdate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        print(f"[DEBUG] PUT /emprestimos/{{contract_id}} - contract_id: {contract_id}, payload: {emprestimo}")
+        # Buscar split atual
+        cursor.execute("SELECT split, cycle, maturity FROM contracts WHERE id = %s", (contract_id,))
+        row = cursor.fetchone()
+        print(f"[DEBUG] row: {row}")
+        if not row:
+            print("[ERROR] Contrato não encontrado.")
+            raise HTTPException(status_code=404, detail="Contrato não encontrado.")
+        split_atual = row['split']
+        cycle_atual = row['cycle']
+        maturity_atual = row['maturity']
+        print(f"[DEBUG] split_atual: {split_atual}, cycle_atual: {cycle_atual}, maturity_atual: {maturity_atual}")
+
+        try:
+            cursor.execute(
+                """
+                UPDATE contracts SET
+                    customer_id = %s,
+                    amount = %s,
+                    split = %s,
+                    amount_provision = %s,
+                    amount_rate = %s,
+                    amount_total = %s,
+                    amount_profit = %s,
+                    rate = %s,
+                    cycle = %s,
+                    maturity = %s,
+                    updated_at = %s
+                WHERE id = %s
+                """,
+                (
+                    emprestimo.customer_id,
+                    emprestimo.amount,
+                    emprestimo.split,
+                    emprestimo.amount_provision,
+                    emprestimo.amount_rate,
+                    emprestimo.amount_total,
+                    emprestimo.amount_profit,
+                    emprestimo.rate,
+                    emprestimo.cycle,
+                    emprestimo.maturity,
+                    agora_sp(),
+                    contract_id
+                )
+            )
+            print("[DEBUG] Contrato atualizado com sucesso.")
+        except Exception as e:
+            print(f"[ERROR] Erro na atualização do contrato: {str(e)}")
+            raise HTTPException(status_code=400, detail=f"Erro na atualização do contrato: {str(e)}")
+
+        # Se split aumentou, inserir novas parcelas
+        if emprestimo.split > split_atual:
+            try:
+                cursor.execute("SELECT MAX(number) as max FROM provisions WHERE contract_id = %s", (contract_id,))
+                result = cursor.fetchone()
+                print(f"[DEBUG] result MAX(number): {result}")
+                last_number = int(result['max']) if result and result['max'] is not None else 0
+                print(f"[DEBUG] last_number: {last_number}")
+                datas = calcular_datas_parcelas(emprestimo.maturity, emprestimo.split, emprestimo.cycle)
+                for i in range(last_number + 1, emprestimo.split + 1):
+                    vencimento = datas[i - 1]
+                    print(f"[DEBUG] Inserindo parcela: number={i}, vencimento={vencimento}")
+                    cursor.execute(
+                        """
+                        INSERT INTO provisions (
+                            number, contract_id, amount, amount_paid, status, maturity,
+                            created_at, updated_at
+                        )
+                        VALUES (%s, %s, %s, 0, %s, %s, %s, %s)
+                        """,
+                        (i, contract_id, emprestimo.amount_provision, 'pending', vencimento, agora_sp(), agora_sp())
+                    )
+                print("[DEBUG] Novas parcelas inseridas com sucesso.")
+            except Exception as e:
+                print(f"[ERROR] Erro ao inserir novas parcelas: {str(e)}")
+                raise HTTPException(status_code=400, detail=f"Erro ao inserir novas parcelas: {str(e)}")
+        try:
+            conn.commit()
+            print("[DEBUG] Commit realizado com sucesso.")
+        except Exception as e:
+            print(f"[ERROR] Erro no commit: {str(e)}")
+            raise HTTPException(status_code=400, detail=f"Erro no commit: {str(e)}")
+        return {"message": "Empréstimo atualizado com sucesso!"}
+    except Exception as e:
+        print(f"[ERROR] Erro ao editar empréstimo: {repr(e)}")
+        raise HTTPException(status_code=400, detail=f"Erro ao editar empréstimo: {repr(e)}")
     finally:
         conn.close()

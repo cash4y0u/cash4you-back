@@ -11,6 +11,7 @@ router = APIRouter(tags=["Autenticação"])
 class Token(BaseModel):
     access_token: str
     token_type: str
+    user_name: str
 
 def create_access_token(data: dict):
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
@@ -30,14 +31,20 @@ async def login(
         if not user:
             raise HTTPException(status_code=401, detail="Usuário não encontrado")
 
+        if not user["password"]:
+            raise HTTPException(status_code=401, detail="Senha inválida")
+
         # Comparar senha com hash
         if not bcrypt.checkpw(password.encode('utf-8'), user["password"].encode('utf-8')):
             raise HTTPException(status_code=401, detail="Senha inválida")
 
         access_token = create_access_token({"sub": user["email"]})
+        user_name = user.get("name") or user.get("nome") or user["email"]
+
         return {
             "access_token": access_token,
-            "token_type": "Bearer"
+            "token_type": "Bearer",
+            "user_name": user_name
         }
 
     finally:
