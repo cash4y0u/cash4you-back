@@ -115,29 +115,31 @@ async def criar_emprestimo(request: Request):
                 (i, contract_id, emprestimo.amount_provision, 'pending', vencimento,agora_sp(),agora_sp())
             )
 
-        # NOVO: Criar despesa no centro de custo "Financeiro"
-        descricao_despesa = f"Concessão de empréstimo contrato #{contract_id}"
-        cursor.execute(
-            """
-            INSERT INTO cash4you.expenses (
-                description, value, cost_center, status, type, created_at, updated_at
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """,
-            (
-                descricao_despesa,
-                emprestimo.amount,
-                "Financeiro",
-                "paid",
-                "out" ,
-                agora_sp(),
-                agora_sp()# saída de dinheiro
-            )
-        )
+        # --- Comentado: Criação de despesa no centro de custo "Financeiro" ao conceder empréstimo ---
+        # descricao_despesa = f"Concessão de empréstimo contrato #{contract_id}"
+        # cursor.execute(
+        #     """
+        #     INSERT INTO cash4you.expenses (
+        #         description, value, cost_center, status, type, created_at, updated_at
+        #     )
+        #     VALUES (%s, %s, %s, %s, %s, %s, %s)
+        #     """,
+        #     (
+        #         descricao_despesa,
+        #         emprestimo.amount,
+        #         "Financeiro",
+        #         "paid",
+        #         "out" ,
+        #
+        #         agora_sp(),
+        #         agora_sp()# saída de dinheiro
+        #     )
+        # )
+        # --- Fim do trecho comentado ---
 
         conn.commit()
-        print("✅ Empréstimo e despesa cadastrados com sucesso.")
-        return {"message": "Empréstimo e despesa cadastrados com sucesso!"}
+        print("✅ Empréstimo cadastrado com sucesso.")
+        return {"message": "Empréstimo cadastrado com sucesso!"}
 
     except Exception as e:
         print(f"❌ Erro ao cadastrar empréstimo: {e}")
