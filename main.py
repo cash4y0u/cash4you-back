@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 
 from routers import (
@@ -17,8 +17,6 @@ from routers import (
 )
 
 app = FastAPI()
-
-from fastapi.middleware.cors import CORSMiddleware
 
 origins = [
     "*",  # ou domínio do seu frontend hospedado
@@ -44,3 +42,11 @@ app.include_router(rotas.router)
 app.include_router(dashboard.router)
 app.include_router(fechamento.router)
 app.include_router(motoboys.router)
+
+health_router = APIRouter()
+
+@health_router.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+app.include_router(health_router)

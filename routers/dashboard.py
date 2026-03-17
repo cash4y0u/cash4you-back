@@ -27,19 +27,20 @@ def obter_transacoes_dashboard(
             FROM cash4you.contracts c
             JOIN cash4you.customers cu ON c.customer_id = cu.id
             WHERE DATE(c.created_at) BETWEEN %s AND %s
-
-            UNION
-
-            -- Despesas (Entrada e Saída)
+            
+            UNION ALL
+            
+            -- Pagamento de parcelas (Entrada)
             SELECT 
-                CASE WHEN e.type = 'in' THEN 'Entrada' ELSE 'Saída' END COLLATE utf8mb4_unicode_ci AS tipo,
-                e.id AS id,
-                e.created_at AS data,
-                e.description COLLATE utf8mb4_unicode_ci AS descricao,
-                e.value AS valor
-            FROM cash4you.expenses e
-            WHERE e.status = 'paid' AND DATE(e.created_at) BETWEEN %s AND %s
-
+                'Entrada' AS tipo,
+                p.id AS id,
+                p.maturity AS data,
+                CONCAT('Pagamento de parcela - ', cu.name) COLLATE utf8mb4_unicode_ci AS descricao,
+                p.amount_paid AS valor
+            FROM cash4you.provisions p
+            JOIN cash4you.contracts c ON p.contract_id = c.id
+            JOIN cash4you.customers cu ON c.customer_id = cu.id
+            WHERE p.status = 'paid' AND DATE(p.maturity) BETWEEN %s AND %s
             ORDER BY data DESC
         """, (inicio, fim, inicio, fim))
 
@@ -134,4 +135,3 @@ def get_monthly_profit(
             return results
     except Exception as e:
         return {"error": str(e)}
-
