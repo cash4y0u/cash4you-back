@@ -49,4 +49,8 @@ health_router = APIRouter()
 def health_check():
     return {"status": "ok"}
 
+@health_router.get("/")
+def root():
+    return {"message": "Hello"}
+
 app.include_router(health_router)
