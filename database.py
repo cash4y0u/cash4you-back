@@ -12,6 +12,6 @@ def get_db_connection():
         database=os.getenv("DATABASE"),
         port=int(os.getenv("PORT")),  # Corrigido: converte para int
         cursorclass=pymysql.cursors.DictCursor,
-        ssl = {"ssl": True}
+        ssl = {"ssl": {}}
     )
     return conn
