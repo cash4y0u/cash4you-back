@@ -10,7 +10,7 @@ def get_db_connection():
         user=os.getenv("USER"),
         password=os.getenv("SECRET"),
         database=os.getenv("DATABASE"),
-        port=3306,
+        port=os.getenv("PORT"),
         cursorclass=pymysql.cursors.DictCursor
     )
     return conn
