@@ -77,7 +77,7 @@ async def register(
 
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         cursor.execute(
-            "INSERT INTO cash4you.users (name, email, password, token, photo, created_at, updated_at, phone) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            "INSERT INTO cash4you.users (name, email, password, api_token, picture, created_at, updated_at, phone) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
             (name, username, hashed, token, photo, created_at, updated_at, phone)
         )
         conn.commit()
