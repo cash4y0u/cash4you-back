@@ -11,3 +11,18 @@ services:
         value: "1"
       - key: PORT
         value: "8080"
+
+    spec:
+      services:
+        - name: web
+          envs:
+            - key: DB_HOST
+              value: db-mysql-nyc3-32891-bkp2-mar-18-backup-do-user-9146124-0.c.db.ondigitalocean.com
+            - key: DB_PORT
+              value: "25060"
+            - key: DB_USER
+              value: doadmin
+            - key: DB_PASSWORD
+              secure: 6tiorF2fNkC45tgP   # store this as a protected secret
+            - key: DB_NAME
+              value: cash4you

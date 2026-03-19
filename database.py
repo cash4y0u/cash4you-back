@@ -7,7 +7,7 @@ load_dotenv()
 def get_db_connection():
     conn = pymysql.connect(
         host=os.getenv("HOST"),
-        user=os.getenv("USER"),
+        user=os.getenv("DB_USER"),
         password=os.getenv("SECRET"),
         database=os.getenv("DATABASE"),
         port=int(os.getenv("PORT")),  # Corrigido: converte para int
