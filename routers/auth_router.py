@@ -5,6 +5,7 @@ from auth import SECRET_KEY, ALGORITHM
 from database import get_db_connection
 import bcrypt
 import pymysql
+from fastapi import Request, Form, HTTPException
 
 router = APIRouter(tags=["Autenticação"])
 
@@ -47,6 +48,40 @@ async def login(
             "user_name": user_name
         }
 
+    finally:
+        cursor.close()
+        conn.close()
+
+@router.post("/register")
+async def register(
+    request: Request,
+    name: str = Form(...),
+    username: str = Form(...),
+    password: str = Form(...),
+    token: str = Form(...),
+    photo: str = Form(...),
+    created_at: str = Form(...),
+    updated_at: str = Form(...),
+    phone: str = Form(...)
+):
+    auth_header = request.headers.get("Authorization")
+    if auth_header != "Bearer secretcash4you":
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id FROM cash4you.users WHERE email = %s", (username,))
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Usuário já existe")
+
+        hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        cursor.execute(
+            "INSERT INTO cash4you.users (name, email, password, token, photo, created_at, updated_at, phone) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            (name, username, hashed, token, photo, created_at, updated_at, phone)
+        )
+        conn.commit()
+        return {"message": "Usuário cadastrado com sucesso"}
     finally:
         cursor.close()
         conn.close()
